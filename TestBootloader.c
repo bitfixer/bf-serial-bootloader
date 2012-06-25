@@ -23,9 +23,10 @@
 #define INT  1
 #define LONG 2
 
-#define PJMP 0x01
+#define PJMP 0x04
 
-#define PRGPIN  PINA
+#define PRGPINREG DDRD
+#define PRGPIN  PIND
 
 void (*app_start)(void) = 0x0000;
 
@@ -87,7 +88,6 @@ for(i=count; i>0; i--)
   data = data/16;
 }
 
-
 uart_puts (dataString);
 }
 
@@ -121,10 +121,6 @@ void init(void) {
 	// set baud rate
 	UBRR0H = (uint8_t)(UART_BAUD_CALC(UART_BAUD_RATE,F_OSC)>>8);
 	UBRR0L = (uint8_t)UART_BAUD_CALC(UART_BAUD_RATE,F_OSC);
-    //UBRR0H = 0;
-    //UBRR0L = 8;
-    
-    //UCSR0A = 0x02;
 
 	// Enable receiver and transmitter; enable RX interrupt
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
@@ -149,22 +145,9 @@ int main(void) {
     
         
     // check programming jumper
-    DDRC = 0x00;
+    PRGPINREG = 0x00;
     // activate pullup resistors
-    //PORTB = 0xFF;
     jumper = PRGPIN;
-    
-    
-    // TEST
-    /*
-    while(1)
-    {
-        transmitHex(CHAR, jumper);
-        uart_puts("\r\n");
-        
-        jumper = PRGPIN;
-    }
-    */
     
     // if jumper is OFF, just go to the program
     if ((jumper & PJMP) == 0)
@@ -173,7 +156,7 @@ int main(void) {
         //uart_puts("Jumping\r\n");
         app_start();
     }
-    
+	
     init(); // init USART
     
     // ask user to start XMODEM transfer
@@ -275,16 +258,5 @@ int main(void) {
     }
     
     uart_puts("Programming complete.\r\n");
-    
-    /*
-    transmitHex(CHAR, data);
-    
-    if (data == EOT)
-    {
-        uart_puts("EOT received\r\n");
-    }
-    */
-    
-    //while(1) {}
     app_start();
 }
